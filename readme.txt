@@ -1,3 +1,7 @@
+# Minor change
+add run_all.m and run_subdir.m to handle image datasets.
+
+# Original Readme
 The C++ package has been successfully compiled in the x64 Windows and x64 Linux. The compiler I used in Windows is Visual Studio, and the compiler in Linux is g++. 
 
 Before compiling, please check project.h file in subfolder "mex". You don't have to do anything if you use Windows. If you use Mac Os or Linux, please uncomment the line 
