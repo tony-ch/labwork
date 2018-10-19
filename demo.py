@@ -35,15 +35,17 @@ def remove_margin(im):
     return im[xl:xh, yl:yh]
 
 def run_subdir(description="load and align images in a directory",
-             path=None, frame=0, grid=(2,2), tform=AffineTransform, save_dir=None):
+             path=None, frame=0, grid=(2,2), tform=AffineTransform, save_dir=None, log_file=None):
     parser = rasl_arg_parser(description=description, path=path, frame=frame,
                              grid=grid, tform=tform)
+    log_file.write("run in %s\n"%(path))
     args = parser.parse_args()
     images = load_images(args.path)
+    log_file.write("load %d images\n"%len(images))
+    
     shapes = np.array([image.shape for image in images])
     new_shape=(np.min(shapes[:, 0]), np.min(shapes[:, 1]))
     images = [cv.resize(im,(100,100),interpolation=cv.INTER_CUBIC) for im in images]
-    print("resize to (%d,%d)"%(new_shape[1],new_shape[0]))
 
     if len(images) < np.prod(args.grid):
         raise ValueError("Only {} images, specify a smaller --grid than {}"\
@@ -70,10 +72,23 @@ def run_subdir(description="load and align images in a directory",
     # plt.waitforbuttonpress()
     for i in range(0,len(images),40):
         end= i+40 if i+40 <= len(images) else len(images)
-        if i == 120:
-            print('this is ')
+        log_file.write("begin %d, end %d\n"%(i,end))
         print("begin %d, end %d"%(i,end))
-        L, S, T, itr = rasl(images[i:end], T, stop_delta=args.stop*10, show=None)
+        
+        try:
+            L, S, T, itr = rasl(images[i:end], T, stop_delta=args.stop*10, show=None)
+        except Exception:
+            print("err, try larger stop value")
+            log_file.write("exception occur, try larger stop value\n")
+            try:
+                pass
+            except Exception:
+                L, S, T, itr = rasl(images[i:end], T, stop_delta=args.stop*40, show=None)
+                print("still err, skip")
+                log_file.write("exception occur again, skip\n")
+            else:
+                log_file.write("exception disappear\n")          
+        
         for j in range(len(L)):
             im = (L[j]-np.min(L[j]))/(np.max(L[j])-np.min(L[j]))*255
             #plt.imshow(im)
@@ -84,24 +99,24 @@ def run_subdir(description="load and align images in a directory",
             im = cv.resize(im, (shapes[i+j][1],shapes[i+j][0]),interpolation=cv.INTER_CUBIC)
             im = Image.fromarray(im.astype(np.uint8))
             im.save(os.path.join(save_dir,"%04d.png"%(i+j)))
-        #print("click the image to exit")
-        #plt.waitforbuttonpress()
 
-def run_all(path, save_dir):
+def run_all(path, save_dir, log_file):
     print("run in %s\n save res in %s\n"% (path,save_dir))
     os.makedirs(save_dir)
     dirs = [ d for d in os.listdir(path) if os.path.isdir(os.path.join(path,d)) ]
     for d in dirs:
-        run_all(os.path.join(path,d),os.path.join(save_dir,d))
+        run_all(os.path.join(path,d),os.path.join(save_dir,d), log_file)
     
     if len(dirs)>0:
         return
-    run_subdir(path=path, save_dir=save_dir)
+    run_subdir(path=path, save_dir=save_dir, log_file=log_file)
 
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--path', default='./data/test/', help='img dir to run demo')
     parser.add_argument('--save_dir', default='./res/res_s40_stop0.05_resize_100x100_crop/', help='dir to save res')
+    parser.add_argument('--log_file', default='./rasl.log', help='rasl log file')
     args = parser.parse_args()
     shutil.rmtree(args.save_dir,ignore_errors=True)
-    run_all(args.path, args.save_dir)
+    log_file=open(args.log_file,"w")
+    run_all(args.path, args.save_dir, log_file)
