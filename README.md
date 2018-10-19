@@ -1,3 +1,9 @@
+minor change
+===
+add demo.py to run on dataset dir
+
+original readme 
+====
 rasl
 ====
 [![Build Status][travis-image]][travis-url] [![PyPI version][pypi-image]][pypi-url] [![PyPI download][download-image]][pypi-url]
