@@ -89,7 +89,7 @@ def rasl(Image, InitT=None, maxiter=1000, stop_delta=0.01,
         objective = np.linalg.norm(A, 'nuc') + lambd * np.abs(E).sum()
         if show:
             _show_outer(A, E, shape, show)
-            print("[{}] objective {} delta{}".format(
+        print("[{}] objective {} delta{}".format(
                 itr, objective, prev_obj-objective))
 
         if (prev_obj - objective) < stop_delta:
