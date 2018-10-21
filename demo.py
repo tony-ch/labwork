@@ -81,20 +81,19 @@ def run_subdir(description="load and align images in a directory",
         print("begin %d, end %d"%(i,end))
         
         try:
-            L, S, T, itr = rasl(images[i:end], T, stop_delta=args.stop*10, show=None)
+            L, S, T, itr = rasl(images[i:end], T, stop_delta=args.stop*10, show=None, maxiter=20)
         except Exception:
             print("err, try larger stop value")
             log_file.write("exception occur, try larger stop value\n")
             try:
                 pass
             except Exception:
-                L, S, T, itr = rasl(images[i:end], T, stop_delta=args.stop*40, show=None)
+                L, S, T, itr = rasl(images[i:end], T, stop_delta=args.stop*20, show=None, maxiter=20)
                 print("still err, skip")
                 log_file.write("exception occur again, skip\n")
             else:
                 print("exception disappear")
-                log_file.write("exception disappear\n")          
-        
+                log_file.write("exception disappear\n")
         for j in range(len(L)):
             im = (L[j]-np.min(L[j]))/(np.max(L[j])-np.min(L[j]))*255
             #plt.imshow(im)
