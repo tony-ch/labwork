@@ -2,8 +2,10 @@
 #-*- coding:utf-8 -*-
 from __future__ import print_function
 from rasl import rasl
-from rasl.application import load_images
+#from rasl.application import load_images
 from rasl.application import rasl_arg_parser
+from skimage.util import img_as_float
+import skimage.io as skio
 from rasl.tform import EuclideanTransform, SimilarityTransform, AffineTransform, ProjectiveTransform
 
 import numpy as np
@@ -40,11 +42,14 @@ def run_subdir(description="load and align images in a directory",
                              grid=grid, tform=tform)
     log_file.write("run in %s\n"%(path))
     args = parser.parse_args()
-    images = load_images(args.path)
+    fnames = [fname for fname in os.listdir(path) if fname.split('.')[-1] in ('jpg', 'gif', 'png', 'bmp')]
+    fnames = sorted(fnames)
+    images = [img_as_float(skio.imread(os.path.join(path, fname), as_grey=True)) for fname in fnames]
+    shapes = np.array([image.shape for image in images])
+    
     log_file.write("load %d images\n"%len(images))
     
     shapes = np.array([image.shape for image in images])
-    new_shape=(np.min(shapes[:, 0]), np.min(shapes[:, 1]))
     images = [cv.resize(im,(100,100),interpolation=cv.INTER_CUBIC) for im in images]
 
     if len(images) < np.prod(args.grid):
@@ -87,6 +92,7 @@ def run_subdir(description="load and align images in a directory",
                 print("still err, skip")
                 log_file.write("exception occur again, skip\n")
             else:
+                print("exception disappear")
                 log_file.write("exception disappear\n")          
         
         for j in range(len(L)):
@@ -98,12 +104,13 @@ def run_subdir(description="load and align images in a directory",
             #plt.show()
             im = cv.resize(im, (shapes[i+j][1],shapes[i+j][0]),interpolation=cv.INTER_CUBIC)
             im = Image.fromarray(im.astype(np.uint8))
-            im.save(os.path.join(save_dir,"%04d.png"%(i+j)))
+            im.save(os.path.join(save_dir,fnames[i+j]))
 
 def run_all(path, save_dir, log_file):
     print("run in %s\n save res in %s\n"% (path,save_dir))
     os.makedirs(save_dir)
     dirs = [ d for d in os.listdir(path) if os.path.isdir(os.path.join(path,d)) ]
+    dirs = sorted(dirs)
     for d in dirs:
         run_all(os.path.join(path,d),os.path.join(save_dir,d), log_file)
     
