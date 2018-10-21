@@ -57,18 +57,7 @@ def run_subdir(description="load and align images in a directory",
                          .format(len(images), args.grid))
     T = [args.tform().inset(image.shape, args.frame)
          for image in images]
-    """
-    L : array(nimages) of ndarray(h, v)
-        aligned low-rank images
-    S : array(nimages) of ndarray(h, v)
-        aligned sparse error images
-    T : array(nimages) of TForm
-        final transforms. Each will include initT's inset frame and
-        the aligning paramv
-    iter : int
-        number of iterations to convergence
-    """
-   
+       
     # L, S, T, itr = rasl(images, T, stop_delta=args.stop, show=args.grid)
     # for j in range(len(L)):
     #     im = Image.fromarray((L[j]/np.max(L[j])*255).astype(np.uint8))
@@ -98,10 +87,20 @@ def run_subdir(description="load and align images in a directory",
             im = (L[j]-np.min(L[j]))/(np.max(L[j])-np.min(L[j]))*255
             #plt.imshow(im)
             #plt.show()
-            im = remove_margin(im)
+            try:
+                im = cv.resize(remove_margin(im), (shapes[i+j][1],shapes[i+j][0]),interpolation=cv.INTER_CUBIC)
+            except Exception:
+                log_file.write('resize exeption\n')
+                print('resize exception')
+                L = images[i:i+len(L)]
+                for k in range(len(L)):
+                    im = (L[k]-np.min(L[k]))/(np.max(L[k])-np.min(L[k]))*255
+                    im = Image.fromarray(im.astype(np.uint8))
+                    im.save(os.path.join(save_dir,fnames[i+k]))
+                break
+        
             #plt.imshow(im)
             #plt.show()
-            im = cv.resize(im, (shapes[i+j][1],shapes[i+j][0]),interpolation=cv.INTER_CUBIC)
             im = Image.fromarray(im.astype(np.uint8))
             im.save(os.path.join(save_dir,fnames[i+j]))
 
@@ -119,8 +118,8 @@ def run_all(path, save_dir, log_file):
 
 if __name__ == '__main__':
     parser = ArgumentParser()
-    parser.add_argument('--path', default='./data/test/', help='img dir to run demo')
-    parser.add_argument('--save_dir', default='./res/res_s40_stop0.05_resize_100x100_crop/', help='dir to save res')
+    parser.add_argument('--path', default='./data/drone_crop/', help='img dir to run demo')
+    parser.add_argument('--save_dir', default='./res/drone_res/', help='dir to save res')
     parser.add_argument('--log_file', default='./rasl.log', help='rasl log file')
     args = parser.parse_args()
     shutil.rmtree(args.save_dir,ignore_errors=True)
