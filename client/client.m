@@ -20,7 +20,7 @@ while(1)
     data=char(receive)'; %将ASCII码转换为str
     %data_all=[data_all;data];
     fprintf("%s\n",data);
-    pause(0.01);
+    pause(1);
     figure;imshow(imread(data));
 end
 
