@@ -2,6 +2,8 @@ minor change
 ===
 add demo.py to run on dataset dir
 
+forked from https://github.com/welch/rasl.git
+
 original readme 
 ====
 rasl
